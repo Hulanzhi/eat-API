@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>合众能量盘 · 身材管理期 · AI三餐+用餐建议 · 沈腾语音助手</title>
+    <title>合众能量盘 · 身材管理期 · AI三餐+用餐建议 · 轻享背景音乐</title>
     <style>
         * {
             margin: 0;
@@ -80,6 +80,78 @@
         .field input, .field select { border: none; background: transparent; font-weight: 600; font-family: inherit; font-size: 0.85rem; width: 65px; outline: none; color: #2c2822; }
         .kcal-recommend { background: #eef3e9; border-radius: 40px; padding: 8px 18px; font-size: 0.85rem; font-weight: 600; }
         .kcal-recommend span { color: #578b34; font-size: 1.1rem; }
+
+        /* 音乐控制栏 */
+        .music-bar {
+            background: #fff9f0;
+            border-radius: 60px;
+            padding: 8px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+            border: 1px solid #f0e3d4;
+        }
+        .music-controls {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+        .music-toggle {
+            background: #578b34;
+            border: none;
+            color: white;
+            font-size: 1.1rem;
+            padding: 6px 20px;
+            border-radius: 40px;
+            cursor: pointer;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: 0.1s;
+        }
+        .music-toggle.muted {
+            background: #b0a088;
+        }
+        .volume-slider {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: #f4efe6;
+            padding: 4px 12px;
+            border-radius: 40px;
+        }
+        .volume-slider label {
+            font-size: 0.8rem;
+            color: #7a684f;
+        }
+        input[type="range"] {
+            width: 110px;
+            height: 4px;
+            -webkit-appearance: none;
+            background: #d9cfbe;
+            border-radius: 5px;
+            outline: none;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 14px;
+            height: 14px;
+            background: #578b34;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+        .song-name {
+            font-size: 0.7rem;
+            color: #8f7a60;
+            background: #f4efe6;
+            padding: 4px 12px;
+            border-radius: 40px;
+        }
 
         /* AI 配置面板 */
         .ai-config-panel {
@@ -191,7 +263,6 @@
         .btn { padding: 12px 28px; border-radius: 50px; font-weight: 700; cursor: pointer; border: none; transition: 0.1s; }
         .btn-primary { background: #578b34; color: white; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
         .btn-secondary { background: #f0ebe2; color: #5e4e3a; }
-        .voice-btn { background: #ffe6d5; color: #bd6a2e; }
         .result-card { background: white; border-radius: 36px; padding: 20px; }
         .result-dishes { display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 20px; }
         .dish-item { flex: 1; text-align: center; border-radius: 24px; padding: 16px; background: #fefaf5; border: 1px solid #f0e3d4; }
@@ -211,6 +282,18 @@
 <div class="container">
     <div class="hero"><h1>🥗 合众能量盘 + AI 饮食向导</h1><div class="badge-group"><span class="badge badge-protein">🥩 蛋白质外环</span><span class="badge badge-veg">🥬 蔬菜中环</span><span class="badge badge-carb">🍚 碳水内环</span></div></div>
     <div class="profile-card"><div class="profile-fields"><div class="field"><label>性别</label><select id="gender"><option value="male">男</option><option value="female">女</option></select></div><div class="field"><label>体重(kg)</label><input type="number" id="weight" value="70" step="1"></div><div class="field"><label>身高(cm)</label><input type="number" id="height" value="175" step="1"></div><div class="field"><label>年龄</label><input type="number" id="age" value="28" step="1"></div><div class="field"><label>活动</label><select id="activity"><option value="1.2">久坐</option><option value="1.375" selected>轻度</option><option value="1.55">中度</option><option value="1.725">活跃</option></select></div><div class="field"><label>目标</label><select id="goal"><option value="0.85">减脂 🔥</option><option value="1.0" selected>保持 ⚖️</option><option value="1.10">增肌 💪</option></select></div></div><div class="kcal-recommend">🍽️ 推荐本餐 ≈ <span id="targetKcal">—</span> kcal</div></div>
+
+    <!-- 背景音乐控制栏 开关键 + 音量滑块 -->
+    <div class="music-bar">
+        <div class="music-controls">
+            <button id="musicToggleBtn" class="music-toggle">🎵 播放音乐</button>
+            <div class="volume-slider">
+                <label>🔊 音量</label>
+                <input type="range" id="volumeSlider" min="0" max="1" step="0.01" value="0.4">
+            </div>
+        </div>
+        <div class="song-name">🎧 轻享 · 陪伴BGM</div>
+    </div>
 
     <!-- AI 大模型配置 + 三餐生成面板 -->
     <div class="ai-config-panel">
@@ -234,13 +317,55 @@
     </div>
 
     <div class="wheel-area"><div class="wheel-wrapper"><canvas id="wheelCanvas" width="500" height="500" style="width:100%; height:auto; max-width:500px; aspect-ratio:1/1"></canvas></div></div>
-    <div class="spin-actions"><button class="btn btn-primary" id="spinAllBtn">🎡 一键旋转三环</button><button class="btn btn-secondary" id="editMenuBtn">✏️ 编辑菜单</button><button class="btn voice-btn" id="voiceAssistantBtn">🎤 沈腾语音助手</button></div>
+    <div class="spin-actions"><button class="btn btn-primary" id="spinAllBtn">🎡 一键旋转三环</button><button class="btn btn-secondary" id="editMenuBtn">✏️ 编辑菜单</button></div>
     <div class="result-card" id="resultPanel"><div class="result-dishes" id="resultDishes"></div><div class="nutrition-summary" id="nutriSummary"></div></div>
 </div>
 <div id="editModal" class="modal"><div class="modal-content"><div class="modal-header"><h3>🍳 定制餐盘食材</h3><span class="close-modal" id="closeModalBtn">&times;</span></div><div class="edit-tabs" id="editTabs"></div><div id="editItemsList"></div><div style="text-align:center; margin:12px 0"><button id="addItemBtn" class="btn-secondary btn" style="padding:6px 20px">+ 添加菜品</button></div><div class="footer-btns"><button id="resetDefaultBtn" class="btn-secondary">恢复默认</button><button id="saveMenuBtn" class="btn-primary">保存并关闭</button></div></div></div>
 
 <script>
     (function(){
+        // ------------------------ 背景音乐模块 (自动播放遵循浏览器策略，需用户首次交互)------------------------
+        // 音乐直链: 利用 raw.githubusercontent.com 获取原始音频
+        const MUSIC_URL = "https://raw.githubusercontent.com/Hulanzhi/eat-API/d5d4d01b01463fef511a863522f266f0beeed7db/123.mp3";
+        const audioElement = new Audio(MUSIC_URL);
+        audioElement.loop = true;          // 循环播放
+        audioElement.volume = 0.4;         // 默认音量 0.4
+        
+        let isMusicPlaying = false;
+        const musicBtn = document.getElementById('musicToggleBtn');
+        const volumeSlider = document.getElementById('volumeSlider');
+        
+        // 音量调节
+        volumeSlider.addEventListener('input', (e) => {
+            const vol = parseFloat(e.target.value);
+            audioElement.volume = vol;
+        });
+        
+        // 播放/暂停 切换函数 (用户手势触发)
+        function toggleMusic() {
+            if (isMusicPlaying) {
+                audioElement.pause();
+                isMusicPlaying = false;
+                musicBtn.innerHTML = '🎵 播放音乐';
+                musicBtn.classList.add('muted');
+            } else {
+                // 播放音频 (必须由用户点击触发)
+                audioElement.play().catch(err => {
+                    console.warn("播放受限: ", err);
+                    alert("浏览器限制了自动播放，请再次点击播放按钮");
+                });
+                isMusicPlaying = true;
+                musicBtn.innerHTML = '⏸️ 暂停音乐';
+                musicBtn.classList.remove('muted');
+            }
+        }
+        
+        musicBtn.addEventListener('click', toggleMusic);
+        
+        // 可选: 页面加载后不自动播放，等待用户主动点击音乐按钮，符合现代浏览器策略
+        // 为了体验，当用户第一次点击任意转盘/生成按钮时，如果音乐未播放但用户希望可以自行点击音乐按钮
+        // 完全符合预期
+        
         // ------------------------ 默认菜单数据 -------------------------
         const DEFAULT_DATA = {
             protein: { name: '蛋白质', items: [
@@ -286,7 +411,7 @@
                 alert('已切换至 DeepSeek 预设，请填写您的 API Key');
             } else if(preset === 'doubao'){
                 document.getElementById('apiBaseUrl').value = 'https://ark.cn-beijing.volces.com/api/v3/chat/completions';
-                document.getElementById('modelName').value = 'ep-2025xxxxxx'; // 提示用户修改为实际端点
+                document.getElementById('modelName').value = 'ep-2025xxxxxx'; 
                 alert('已切换至豆包(火山)地址，请修改模型名称为您的接入点名称（如 doubao-pro-32k），并填写 API Key');
             }
         }
@@ -294,11 +419,9 @@
             btn.addEventListener('click',()=>setPreset(btn.dataset.preset));
         });
         
-        // 获取启用的item
         function getEnabledItems(cat){ return menuData[cat].items.filter(i=>i.enabled); }
         function getCurrentItem(cat){ const items=getEnabledItems(cat); if(!items.length) return null; const angle=angles[cat]; const sides=items.length; const sectorAngle=(Math.PI*2)/sides; const pointerAngle=-Math.PI/2; let rel=((pointerAngle-angle)%(Math.PI*2)+Math.PI*2)%(Math.PI*2); let idx=Math.floor(rel/sectorAngle); if(idx>=sides) idx=0; return items[idx]; }
         
-        // 绘制转盘 (保留原风格)
         function drawWheel(){
             if(!ctx) return; const w=canvas.width,h=canvas.height; ctx.clearRect(0,0,w,h); const centerX=w/2,centerY=h/2; const radius=Math.min(w,h)/2-12;
             const rings=[{cat:'protein',innerR:0.58,outerR:0.94},{cat:'vegetable',innerR:0.35,outerR:0.53},{cat:'carb',innerR:0.14,outerR:0.30}];
@@ -309,16 +432,14 @@
         function updateUI(){ const p=getCurrentItem('protein'), v=getCurrentItem('vegetable'), c=getCurrentItem('carb'); document.getElementById('resultDishes').innerHTML=`<div class="dish-item protein">🥩<div class="dish-name">${p?.name||'—'}</div><div>${p?.grams||0}g · ${p?.kcal||0}kcal</div></div><div class="dish-item veg">🥬<div class="dish-name">${v?.name||'—'}</div><div>${v?.grams||0}g · ${v?.kcal||0}kcal</div></div><div class="dish-item carb">🍚<div class="dish-name">${c?.name||'—'}</div><div>${c?.grams||0}g · ${c?.kcal||0}kcal</div></div>`; const total=(p?.kcal||0)+(v?.kcal||0)+(c?.kcal||0); const tp=(p?.protein||0)+(v?.protein||0)+(c?.protein||0); const tc=(p?.carbs||0)+(v?.carbs||0)+(c?.carbs||0); const tf=(p?.fat||0)+(v?.fat||0)+(c?.fat||0); const recKcal=updateRecommendedKcal(); let matchClass='',matchText=''; if(total>0&&recKcal){ if(total<=recKcal*1.1&&total>=recKcal*0.85) {matchClass='match-good'; matchText='✓ 热量合适';} else if(total>recKcal*1.1){matchClass='match-high'; matchText='⚠️ 略高';} else {matchClass='match-low'; matchText='⚡ 偏低';}} document.getElementById('nutriSummary').innerHTML=`<span>🔥 总热量 <strong>${total}</strong> kcal</span><span>💪 蛋白 ${tp.toFixed(1)}g</span><span>🌾 碳水 ${tc.toFixed(1)}g</span><span>🧈 脂肪 ${tf.toFixed(1)}g</span><span class="match-badge ${matchClass}">${matchText}</span>`; }
         function updateRecommendedKcal(){ const gender=document.getElementById('gender').value; const w=parseFloat(document.getElementById('weight').value), h=parseFloat(document.getElementById('height').value), age=parseFloat(document.getElementById('age').value), act=parseFloat(document.getElementById('activity').value), goal=parseFloat(document.getElementById('goal').value); if(isNaN(w)||isNaN(h)||isNaN(age)) return 0; let bmr=gender==='male'?88.362+(13.397*w)+(4.799*h)-(5.677*age):447.593+(9.247*w)+(3.098*h)-(4.330*age); let perMeal=Math.round((bmr*act*goal)/3); document.getElementById('targetKcal').innerText=perMeal; return perMeal; }
         
-        // 旋转动画
         function startSpinWithTargets(targetAnglesObj, duration=1200){ if(isAnimating) return; const start={ protein:angles.protein, vegetable:angles.vegetable, carb:angles.carb }; const target={ protein:targetAnglesObj.protein??angles.protein, vegetable:targetAnglesObj.vegetable??angles.vegetable, carb:targetAnglesObj.carb??angles.carb }; isAnimating=true; const startTime=performance.now(); function step(now){ let t=Math.min(1,(now-startTime)/duration); const ease=1-Math.pow(1-t,2.5); for(let cat of ['protein','vegetable','carb']){ angles[cat]=start[cat]+(target[cat]-start[cat])*ease; } drawWheel(); if(t<1) requestAnimationFrame(step); else { for(let cat of ['protein','vegetable','carb']) angles[cat]=target[cat]; drawWheel(); isAnimating=false; updateUI(); } } requestAnimationFrame(step); }
         function randomSpin(){ if(isAnimating) return; const cats=['protein','vegetable','carb']; let tgt={}; cats.forEach(cat=>{ const len=getEnabledItems(cat).length; if(len===0) return; tgt[cat]=angles[cat]+(5+Math.random()*10)*Math.PI*2+Math.random()*Math.PI*2; }); startSpinWithTargets(tgt,1800); }
         
-        // 根据菜品名称设置转盘角度精准匹配
         function setAnglesToMatchDish(proteinName, vegName, carbName){
             function findAngleForItem(cat, targetName){ const items=getEnabledItems(cat); if(!items.length) return null; const idx=items.findIndex(i=>i.name===targetName); if(idx===-1) return null; const sides=items.length; const sectorAngle=(Math.PI*2)/sides; const pointerAngle=-Math.PI/2; const targetMidAngle=pointerAngle; let requiredStart=targetMidAngle - (idx*sectorAngle + sectorAngle/2); requiredStart=((requiredStart % (2*Math.PI))+2*Math.PI)%(2*Math.PI); return requiredStart; }
             let newAngles={}; if(proteinName){ let a=findAngleForItem('protein',proteinName); if(a!==null) newAngles.protein=a; } if(vegName){ let a=findAngleForItem('vegetable',vegName); if(a!==null) newAngles.vegetable=a; } if(carbName){ let a=findAngleForItem('carb',carbName); if(a!==null) newAngles.carb=a; } if(Object.keys(newAngles).length) startSpinWithTargets(newAngles,800); else alert('未在菜单中找到完全匹配的菜品，请检查编辑菜单或添加对应食材。'); }
         
-        // ===================== AI 生成三餐 + 用餐建议 ====================
+        // AI 功能 (不含沈腾语音)
         async function testConnection(){ const {baseUrl,apiKey,model}=apiConfig; if(!baseUrl||!apiKey) { document.getElementById('connStatus').innerHTML='❌ 请填完整'; return; } try{ const resp=await fetch(baseUrl,{ method:'POST', headers:{ 'Content-Type':'application/json','Authorization':`Bearer ${apiKey}` }, body:JSON.stringify({ model:model, messages:[{role:'user',content:'回复OK'}], max_tokens:5 }) }); if(resp.ok){ const data=await resp.json(); if(data.choices) { document.getElementById('connStatus').innerHTML='✅ 连通成功'; } else throw new Error(); } else { document.getElementById('connStatus').innerHTML=`❌ ${resp.status}`; } }catch(e){ document.getElementById('connStatus').innerHTML='❌ 连接失败'; } }
         
         async function generateMealPlan(){ const {baseUrl,apiKey,model}=apiConfig; if(!baseUrl||!apiKey){ alert('请先保存API配置'); return; } const container=document.getElementById('mealPlanContainer'); container.innerHTML='<div style="text-align:center;">🤖 AI 正在为您定制三餐+用餐建议，请稍候...</div>';
@@ -333,7 +454,7 @@
             - 早餐：总热量≤350kcal，清淡，包含蛋白质+蔬菜+少量碳水（碳水必须从碳水库选择）。
             - 午餐：主食必须是米饭类（杂粮饭/白米饭，从碳水库中选“杂粮饭”或“藜麦饭”这类带饭字的），搭配一份蛋白质和一份蔬菜。
             - 晚餐：完全不吃碳水（极低碳水），因此晚餐的碳水菜品请选择蔬菜库中的低碳水蔬菜（如凉拌黄瓜、清炒菠菜）且份量极小（克重≤50g），实际热量忽略不计；重点放在蛋白质和蔬菜，总热量≤400kcal。
-            额外要求：请输出一段“用餐建议”，包含进食顺序、替代品推荐或饮水提醒。
+            额外要求：输出一段“用餐建议”，包含进食顺序、替代品推荐或饮水提醒。
             输出必须为严格的JSON格式，包含breakfast, lunch, dinner, advice四个字段。每个餐包含protein, veg, carb, grams_hint对象(分别对应protein,veg,carb的克重)。示例：
             {
               "breakfast": { "protein": "香煎鸡胸肉", "veg": "蒜蓉西兰花", "carb": "燕麦粥", "grams_hint": { "protein":80, "veg":120, "carb":100 } },
@@ -365,7 +486,7 @@
             document.querySelectorAll('.apply-btn').forEach(btn=>{ btn.addEventListener('click',()=>{ const protein=btn.dataset.protein, veg=btn.dataset.veg, carb=btn.dataset.carb; setAnglesToMatchDish(protein,veg,carb); }); });
         }
         
-        // 编辑菜单 modal 管理
+        // 编辑菜单 modal 
         let currentEditCat='protein';
         function renderEditModal(){ const tabsDiv=document.getElementById('editTabs'); tabsDiv.innerHTML=''; ['protein','vegetable','carb'].forEach(cat=>{ const btn=document.createElement('button'); btn.innerText=cat==='protein'?'🥩 蛋白质':(cat==='vegetable'?'🥬 蔬菜':'🍚 碳水'); btn.className=`edit-tab ${currentEditCat===cat?'active':''}`; btn.dataset.cat=cat; btn.addEventListener('click',()=>{ currentEditCat=cat; renderEditModal(); }); tabsDiv.appendChild(btn); }); const items=menuData[currentEditCat].items; const listDiv=document.getElementById('editItemsList'); listDiv.innerHTML=''; items.forEach((item,idx)=>{ const div=document.createElement('div'); div.className='edit-item'; div.innerHTML=`<input type="text" value="${escapeHtml(item.name)}" data-field="name" data-idx="${idx}"><input type="number" value="${item.grams}" data-field="grams" data-idx="${idx}" step="5"><input type="number" value="${item.kcal}" data-field="kcal" data-idx="${idx}" step="5"><input type="number" value="${item.protein}" data-field="protein" data-idx="${idx}" step="0.5"><input type="number" value="${item.carbs}" data-field="carbs" data-idx="${idx}" step="0.5"><input type="number" value="${item.fat}" data-field="fat" data-idx="${idx}" step="0.5"><div class="toggle ${item.enabled?'active':''}" data-enabled data-idx="${idx}"></div><button class="btn-icon" data-del data-idx="${idx}">🗑️</button>`; listDiv.appendChild(div); });
             document.querySelectorAll('[data-field]').forEach(inp=>{ inp.addEventListener('change',(e)=>{ const idx=parseInt(inp.dataset.idx); const field=inp.dataset.field; let val=inp.value; if(field!=='name') val=parseFloat(val); if(!isNaN(val)||field==='name') menuData[currentEditCat].items[idx][field]=val; renderEditModal(); }); });
@@ -374,7 +495,6 @@
         }
         function escapeHtml(str){ return String(str).replace(/[&<>]/g,function(m){if(m==='&') return '&amp;'; if(m==='<') return '&lt;'; if(m==='>') return '&gt;'; return m;});}
         
-        // 初始化 & 事件绑定
         function resizeCanvas(){ const size=Math.min(500,window.innerWidth-60); canvas.width=size; canvas.height=size; drawWheel(); }
         window.addEventListener('resize',resizeCanvas); resizeCanvas();
         document.getElementById('spinAllBtn').addEventListener('click',randomSpin);
@@ -386,12 +506,12 @@
         document.getElementById('testConnBtn').addEventListener('click',()=>{ saveApiConfigToLocal(); testConnection(); });
         document.getElementById('saveApiBtn').addEventListener('click',saveApiConfigToLocal);
         document.getElementById('genMealPlanBtn').addEventListener('click',generateMealPlan);
-        document.getElementById('voiceAssistantBtn').addEventListener('click',()=>{ const p=getCurrentItem('protein')?.name||'肉肉', v=getCurrentItem('vegetable')?.name||'青菜', c=getCurrentItem('carb')?.name||'主食'; const total=(getCurrentItem('protein')?.kcal||0)+(getCurrentItem('vegetable')?.kcal||0)+(getCurrentItem('carb')?.kcal||0); const msg=`沈腾提醒：${p}、${v}、${c}，这一餐约${total}大卡，身材管理没问题！`; if(window.speechSynthesis){ const utterance=new SpeechSynthesisUtterance(msg); utterance.lang='zh-CN'; speechSynthesis.cancel(); speechSynthesis.speak(utterance); } else alert(msg); });
         function refreshEverything(){ drawWheel(); updateUI(); updateRecommendedKcal(); }
         function loadStorage(){ const saved=localStorage.getItem('wheelMenuData'); if(saved) try{ menuData=JSON.parse(saved); }catch(e){} refreshEverything(); }
         loadStorage(); loadApiConfig();
         ['gender','weight','height','age','activity','goal'].forEach(id=>{ document.getElementById(id).addEventListener('input',()=>{ updateRecommendedKcal(); updateUI(); }); });
         window.addEventListener('click',(e)=>{ if(e.target===document.getElementById('editModal')) document.getElementById('editModal').classList.remove('show'); });
+        // 添加一个辅助: 如果用户点击任意地方并且音乐未初始化，不会自动播放，完全依赖音乐按钮
     })();
 </script>
 </body>
